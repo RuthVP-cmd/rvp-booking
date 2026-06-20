@@ -488,7 +488,7 @@ export default function RVPBooking() {
 
   const submit = async () => {
     setBusy(true);
-    const fallback = `Thanks, ${name.split(" ")[0]}! Your ${fmt?.label.toLowerCase()} for ${svc?.title} is locked in for ${fmtDateShort(date)} at ${time}. We're looking forward to it — talk soon!`;
+    const fallback = `Thanks, ${name.split(" ")[0]}! Your ${fmt?.label.toLowerCase()} for ${svc?.title} is locked in for ${fmtDateShort(date)} at ${time}. We're looking forward to it. Talk soon!`;
     let note = fallback;
     try {
       // Optional: swap for your own confirmation/email API.
@@ -536,7 +536,7 @@ export default function RVPBooking() {
     ["How should we meet?", "Pick whichever's easiest for you."],
     ["Find a time that works", "All times shown in your local timezone."],
     ["Tell us about you", "So we can confirm and prepare for your session."],
-    ["Last step — confirm & pay", "Complete payment to lock in your booking."],
+    ["Last step: confirm & pay", "Complete payment to lock in your booking."],
   ][step];
 
   return (
@@ -608,7 +608,7 @@ export default function RVPBooking() {
           <Calendar value={date} onChange={setDate} />
           {date && (
             <div style={{ marginTop: 18 }}>
-              <p style={LBL}>Available times — {fmtDateShort(date)}</p>
+              <p style={LBL}>Available times · {fmtDateShort(date)}</p>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(88px,1fr))", gap: 8 }}>
                 {TIMES.map(t => (
                   <div key={t} onClick={() => setTime(t)} style={{ padding: "10px 0", textAlign: "center", borderRadius: 9, fontFamily: SANS, fontSize: 13, fontWeight: 600, cursor: "pointer", background: time === t ? T.GOLD : T.CARD2, color: time === t ? T.BG : T.TEXT, border: `1.5px solid ${time === t ? T.GOLD : T.BORD}`, transition: "all .15s" }}>{t}</div>
