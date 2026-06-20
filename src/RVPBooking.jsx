@@ -1,21 +1,8 @@
 // RVPBooking.jsx
-// ─────────────────────────────────────────────────────────────────────────────
-// RVP Engineering Services — "Schedule a Consultation" booking flow.
-// Single self-contained component. Blueprint Dark theme, Golden Gate Bridge
-// blueprint background, 5-step flow + confirmation.
-//
-// Fonts (load once in your app, e.g. in index.html or a global stylesheet):
-//   Hanken Grotesk (400–800) + Libre Caslon Display
-//   https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700;800&family=Libre+Caslon+Display&display=swap
-//
-// Logo: drop your transparent white-on-dark PNG at the path in LOGO_SRC below
-//   (or swap for an imported asset). Falls back to a CSS wordmark if missing.
-// ─────────────────────────────────────────────────────────────────────────────
 import React, { useState } from "react";
 
 const LOGO_SRC = "/RVP Logo.png";
 
-// ── Design tokens ─────────────────────────────────────────────────────────────
 const T = {
   BG: "#0E1A2D", BG2: "#0A1525",
   CARD: "#15233B", CARD2: "#1B2D49", CARD3: "#213553",
@@ -26,7 +13,6 @@ const T = {
   BLUE_BG: "#0D2238", BLUE_BD: "#274a72", BLUE_TX: "#8FC0F5",
 };
 
-// ── Business details ──────────────────────────────────────────────────────────
 const BIZ = {
   bluevineLink: "https://pay.bluevine.com/p/c2238b2b9b234bd7957949790cc232c5",
   routing: "125109019",
@@ -39,7 +25,6 @@ const BIZ = {
 const FEE_US = 50;
 const FEE_PH = 2500;
 
-// ── Regions & services ────────────────────────────────────────────────────────
 const REGIONS = {
   us: {
     label: "United States", currency: "USD", fee: FEE_US,
@@ -72,14 +57,12 @@ const FORMATS = [
 const TIMES = ["8:00 AM", "9:00 AM", "10:00 AM", "11:00 AM", "12:00 PM", "1:00 PM", "2:00 PM", "3:00 PM", "4:00 PM", "5:00 PM"];
 const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
 const money = (region, fee) => region === "ph" ? `₱${fee.toLocaleString()}` : `$${fee}`;
 const fmtDate = (d) => d ? d.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" }) : "";
 const fmtDateShort = (d) => d ? d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" }) : "";
 const SANS = "'Hanken Grotesk', sans-serif";
 const SERIF = "'Libre Caslon Display', serif";
 
-// ── Line icon set ─────────────────────────────────────────────────────────────
 function Icon({ name, size = 22, stroke = 1.6, color }) {
   const p = { fill: "none", stroke: color || "currentColor", strokeWidth: stroke, strokeLinecap: "round", strokeLinejoin: "round" };
   const paths = {
@@ -105,7 +88,6 @@ function Icon({ name, size = 22, stroke = 1.6, color }) {
   return <svg width={size} height={size} viewBox="0 0 24 24">{paths[name] || null}</svg>;
 }
 
-// ── Brand: CSS wordmark fallback + flags ──────────────────────────────────────
 function RVPLogo({ variant = "light", scale = 1, align = "center" }) {
   const ink = variant === "light" ? "#F4F6FB" : "#14233E";
   const rule = variant === "light" ? "rgba(244,246,251,0.85)" : "rgba(20,35,62,0.85)";
@@ -166,14 +148,12 @@ function FlagPH({ w = 64, radius = 5 }) {
   );
 }
 
-// Logo: real PNG if present, else CSS wordmark fallback.
 function Logo({ scale = 1.5 }) {
   const [err, setErr] = useState(false);
   if (err) return <RVPLogo variant="light" scale={0.82} />;
   return <img src={LOGO_SRC} alt="RVP Engineering Services" onError={() => setErr(true)} style={{ height: 104 * scale, objectFit: "contain", display: "block" }} />;
 }
 
-// ── Golden Gate Bridge blueprint background ───────────────────────────────────
 function BlueprintBG() {
   const L = "#6AA0E6";
   const s = { stroke: L, fill: "none", vectorEffect: "non-scaling-stroke" };
@@ -284,7 +264,6 @@ function BlueprintBG() {
   );
 }
 
-// ── UI atoms ──────────────────────────────────────────────────────────────────
 const LBL = { fontFamily: SANS, fontSize: 12, fontWeight: 700, color: T.MUTED, textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 11px" };
 const NEXT = (on, grow) => ({ background: on ? T.GOLD : T.BORD, border: "none", borderRadius: 11, color: on ? T.BG : T.FAINT, fontFamily: SANS, fontSize: 15, fontWeight: 700, padding: "13px 30px", cursor: on ? "pointer" : "not-allowed", transition: "all .18s", flex: grow ? 1 : "none", boxShadow: on ? "0 8px 20px rgba(212,178,90,0.28)" : "none" });
 
@@ -407,7 +386,6 @@ function Confirm({ checked, onChange, tone, label }) {
   );
 }
 
-// ── Shell + summary strip ─────────────────────────────────────────────────────
 function BookingStrip({ rd, svc, fmt, amount, date, time }) {
   const items = [];
   if (rd) items.push(rd.label);
@@ -452,7 +430,6 @@ function Shell({ children, step, summary, hideStepper }) {
   );
 }
 
-// ── Main component ────────────────────────────────────────────────────────────
 export default function RVPBooking() {
   const [step, setStep] = useState(0);
   const [region, setRegion] = useState(null);
@@ -486,18 +463,28 @@ export default function RVPBooking() {
 
   const reset = () => { setStep(0); setRegion(null); setService(null); setFormat(null); setDate(null); setTime(null); setName(""); setEmail(""); setPhone(""); setNotes(""); setPay(null); setPayOk(false); setDone(false); setAiNote(""); };
 
+  // ── THE FIX: submit now calls /api/book ──────────────────────────────────
   const submit = async () => {
     setBusy(true);
     const fallback = `Thanks, ${name.split(" ")[0]}! Your ${fmt?.label.toLowerCase()} for ${svc?.title} is locked in for ${fmtDateShort(date)} at ${time}. We're looking forward to it. Talk soon!`;
-    let note = fallback;
     try {
-      // Optional: swap for your own confirmation/email API.
-      if (typeof window !== "undefined" && window.claude?.complete) {
-        const r = await window.claude.complete(`Write a warm, friendly 2-sentence booking confirmation for ${name.split(" ")[0]}, who booked a ${fmt?.label} consultation on ${fmtDate(date)} at ${time} for "${svc?.title}" with RVP Engineering Services. Encouraging and personable, no greeting line, no quotes.`);
-        if (r && r.trim()) note = r.trim();
-      }
-    } catch { /* keep fallback */ }
-    setAiNote(note);
+      await fetch("/api/book", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name,
+          email,
+          phone,
+          service: svc?.title,
+          date: date ? date.toISOString().split("T")[0] : "",
+          time,
+          message: notes,
+        }),
+      });
+    } catch (err) {
+      console.error("Booking API error:", err);
+    }
+    setAiNote(fallback);
     setBusy(false);
     setDone(true);
   };
