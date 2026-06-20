@@ -399,7 +399,7 @@ export default function RVPBooking() {
     <div style={{ minHeight:"100vh", background:BG, padding:"32px 16px", fontFamily:"'Inter', sans-serif" }}>
       {/* Header */}
       <div style={{ textAlign:"center", marginBottom:"32px" }}>
-        <img src="/RVP Logo.PNG" alt="RVP Engineering Services" style={{ height:"64px", objectFit:"contain", marginBottom:"6px" }}/>
+        <img src="/RVP_Logo_V2.png" alt="RVP Engineering Services" style={{ height:"80px", objectFit:"contain", marginBottom:"6px" }}/>
         <p style={{ fontSize:"13px", color:MUTED }}>Schedule a Consultation</p>
       </div>
 
