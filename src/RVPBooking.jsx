@@ -50,8 +50,8 @@ const REGIONS = {
 };
 
 const FORMATS = [
-  { id: "video", icon: "video", label: "Video Call", sub: "Google Meet or Zoom" },
   { id: "phone", icon: "phone", label: "Phone Call", sub: "We'll call you" },
+  { id: "video", icon: "video", label: "Video Call", sub: "Google Meet or Zoom" },
 ];
 
 const TIMES = ["8:00 AM", "9:00 AM", "10:00 AM", "11:00 AM", "12:00 PM", "1:00 PM", "2:00 PM", "3:00 PM", "4:00 PM", "5:00 PM"];
