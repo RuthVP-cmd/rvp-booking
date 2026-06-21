@@ -25,8 +25,6 @@ const BIZ = {
 const FEE_US = 50;
 const FEE_PH = 2500;
 
-const GOOGLE_BOOKING_URL = "https://calendar.app.google/LHv3otF5Z8W4beKGA";
-
 const REGIONS = {
   us: {
     label: "United States", currency: "USD", fee: FEE_US,
@@ -56,6 +54,7 @@ const FORMATS = [
   { id: "phone", icon: "phone", label: "Phone Call", sub: "We'll call you" },
 ];
 
+const TIMES = ["8:00 AM", "9:00 AM", "10:00 AM", "11:00 AM", "12:00 PM", "1:00 PM", "2:00 PM", "3:00 PM", "4:00 PM", "5:00 PM"];
 const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
 const money = (region, fee) => region === "ph" ? `₱${fee.toLocaleString()}` : `$${fee}`;
@@ -85,7 +84,6 @@ function Icon({ name, size = 22, stroke = 1.6, color }) {
     card: <g {...p}><rect x="2.5" y="5" width="19" height="14" rx="2.5" /><path d="M2.5 9.5h19M6 15h4" /></g>,
     bank: <g {...p}><path d="M4 10h16M5 10l7-5 7 5M6 10v7M10 10v7M14 10v7M18 10v7M4 20h16" /></g>,
     mail: <g {...p}><rect x="3" y="5" width="18" height="14" rx="2" /><path d="M3.5 7l8.5 6 8.5-6" /></g>,
-    external: <g {...p}><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" /><path d="M15 3h6v6" /><path d="M10 14L21 3" /></g>,
   };
   return <svg width={size} height={size} viewBox="0 0 24 24">{paths[name] || null}</svg>;
 }
@@ -274,7 +272,7 @@ function Chip({ children, color }) {
 }
 
 function Stepper({ step }) {
-  const steps = ["Service", "Format", "Schedule", "Details", "Pay"];
+  const steps = ["Service", "Format", "Time", "Details", "Pay"];
   return (
     <div style={{ display: "flex", alignItems: "flex-start", marginBottom: 26 }}>
       {steps.map((s, i) => {
@@ -332,6 +330,44 @@ function SummaryRow({ label, value, accent }) {
   );
 }
 
+function Calendar({ value, onChange }) {
+  const today = new Date();
+  const [view, setView] = useState({ y: today.getFullYear(), m: today.getMonth() });
+  const days = new Date(view.y, view.m + 1, 0).getDate();
+  const first = new Date(view.y, view.m, 1).getDay();
+  const cells = Array(first).fill(null).concat(Array.from({ length: days }, (_, i) => i + 1));
+  const prev = () => setView(v => v.m === 0 ? { y: v.y - 1, m: 11 } : { y: v.y, m: v.m - 1 });
+  const next = () => setView(v => v.m === 11 ? { y: v.y + 1, m: 0 } : { y: v.y, m: v.m + 1 });
+  const t0 = new Date(); t0.setHours(0, 0, 0, 0);
+  const isPast = d => { if (!d) return true; const dt = new Date(view.y, view.m, d); dt.setHours(0, 0, 0, 0); return dt < t0; };
+  const isToday = d => d && view.y === today.getFullYear() && view.m === today.getMonth() && d === today.getDate();
+  const isSel = d => d && value && value.getFullYear() === view.y && value.getMonth() === view.m && value.getDate() === d;
+  const navBtn = { background: T.CARD2, border: `1px solid ${T.BORD}`, color: T.TEXT, cursor: "pointer", fontSize: 16, width: 32, height: 32, borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center" };
+  return (
+    <div style={{ background: T.BG, border: `1px solid ${T.BORD}`, borderRadius: 14, overflow: "hidden" }}>
+      <div style={{ padding: "14px 14px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <button onClick={prev} style={navBtn}>‹</button>
+        <span style={{ fontFamily: SANS, fontWeight: 700, color: T.TEXT, fontSize: 15 }}>{MONTHS[view.m]} {view.y}</span>
+        <button onClick={next} style={navBtn}>›</button>
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(7,1fr)", gap: 3, padding: "0 12px 14px" }}>
+        {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map(d => <div key={d} style={{ textAlign: "center", fontSize: 11, fontWeight: 700, color: T.FAINT, padding: "4px 0" }}>{d}</div>)}
+        {cells.map((d, i) => {
+          const past = isPast(d), sel = isSel(d);
+          return (
+            <div key={i} onClick={() => d && !past && onChange(new Date(view.y, view.m, d))}
+              style={{ position: "relative", textAlign: "center", padding: "9px 0", borderRadius: 9, fontSize: 13.5, cursor: d && !past ? "pointer" : "default", background: sel ? T.GOLD : "transparent", color: sel ? T.BG : past ? T.BORD : T.TEXT, fontWeight: sel ? 700 : 500, transition: "background .12s", outline: isToday(d) && !sel ? `1px solid ${T.BORDS}` : "none" }}
+              onMouseEnter={e => { if (d && !past && !sel) e.currentTarget.style.background = T.CARD2; }}
+              onMouseLeave={e => { if (!sel) e.currentTarget.style.background = "transparent"; }}>
+              {d || ""}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 function PayPanel({ tone, children }) {
   const map = { green: { bg: T.GREEN_BG, bd: T.GREEN_BD }, blue: { bg: T.BLUE_BG, bd: T.BLUE_BD } }[tone];
   return <div style={{ background: map.bg, border: `1px solid ${map.bd}`, borderRadius: 12, padding: 16, marginTop: 12 }}>{children}</div>;
@@ -350,12 +386,13 @@ function Confirm({ checked, onChange, tone, label }) {
   );
 }
 
-function BookingStrip({ rd, svc, fmt, amount, booked }) {
+function BookingStrip({ rd, svc, fmt, amount, date, time }) {
   const items = [];
   if (rd) items.push(rd.label);
   if (svc) items.push(svc.title);
   if (fmt) items.push(`${fmt.label} · ${amount}`);
-  if (booked) items.push("Time slot selected");
+  if (date) items.push(fmtDateShort(date));
+  if (time) items.push(time);
   if (!items.length) return null;
   return (
     <div style={{ background: T.CARD, border: `1px solid ${T.BORD}`, borderRadius: 12, padding: "12px 16px", marginBottom: 18, display: "flex", flexWrap: "wrap", alignItems: "center", gap: 8 }}>
@@ -366,68 +403,6 @@ function BookingStrip({ rd, svc, fmt, amount, booked }) {
           <span style={{ fontSize: 12.5, color: T.TEXT2, fontWeight: 600 }}>{it}</span>
         </React.Fragment>
       ))}
-    </div>
-  );
-}
-
-// ── Google Calendar Booking Step ─────────────────────────────────────────────
-function GoogleCalendarStep({ onBooked, booked }) {
-  return (
-    <div>
-      <p style={{ fontSize: 13.5, color: T.MUTED, margin: "0 0 16px", lineHeight: 1.6 }}>
-        Pick an available time below. The calendar shows your real-time availability — already-booked slots are automatically blocked.
-      </p>
-
-      {/* Embedded Google Calendar booking page */}
-      <div style={{ borderRadius: 12, overflow: "hidden", border: `1px solid ${T.BORD}`, marginBottom: 20 }}>
-        <iframe
-          src={GOOGLE_BOOKING_URL}
-          style={{ width: "100%", height: 600, border: "none", display: "block", background: "#fff" }}
-          title="Book a consultation with RVP Engineering Services"
-          allow="camera; microphone"
-        />
-      </div>
-
-      {/* "I've selected my time" confirmation toggle */}
-      <div
-        onClick={() => onBooked(!booked)}
-        style={{
-          display: "flex", alignItems: "center", gap: 12, padding: "14px 16px",
-          background: booked ? T.GREEN_BG : T.CARD2,
-          border: `1.5px solid ${booked ? T.GREEN_BD : T.BORD}`,
-          borderRadius: 12, cursor: "pointer", transition: "all .18s"
-        }}
-      >
-        <div style={{
-          width: 22, height: 22, borderRadius: 6, flexShrink: 0, transition: "all .15s",
-          background: booked ? T.GREEN : "transparent",
-          border: `1.5px solid ${booked ? T.GREEN : T.BORD}`,
-          display: "flex", alignItems: "center", justifyContent: "center"
-        }}>
-          {booked && <Icon name="check" size={13} stroke={2.6} color={T.BG} />}
-        </div>
-        <div>
-          <div style={{ fontFamily: SANS, fontSize: 14, fontWeight: 700, color: booked ? T.GREEN : T.TEXT2 }}>
-            I've selected and confirmed my time slot
-          </div>
-          <div style={{ fontSize: 12, color: T.FAINT, marginTop: 2 }}>
-            Tick this after completing your booking in the calendar above
-          </div>
-        </div>
-      </div>
-
-      {/* Fallback link if embed doesn't load */}
-      <div style={{ textAlign: "center", marginTop: 14 }}>
-        <a
-          href={GOOGLE_BOOKING_URL}
-          target="_blank"
-          rel="noopener noreferrer"
-          style={{ display: "inline-flex", alignItems: "center", gap: 6, color: T.GOLD, fontSize: 12.5, textDecoration: "none", fontWeight: 600 }}
-        >
-          <Icon name="external" size={14} color={T.GOLD} />
-          Open booking page in new tab
-        </a>
-      </div>
     </div>
   );
 }
@@ -460,7 +435,8 @@ export default function RVPBooking() {
   const [region, setRegion] = useState(null);
   const [service, setService] = useState(null);
   const [format, setFormat] = useState(null);
-  const [booked, setBooked] = useState(false); // replaces date/time — user confirms via Google Cal
+  const [date, setDate] = useState(null);
+  const [time, setTime] = useState(null);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
@@ -483,22 +459,27 @@ export default function RVPBooking() {
     : [{ id: "bluevine", icon: "card", label: "Pay Online", sub: "Credit / debit card via BlueVine" },
        { id: "ach", icon: "bank", label: "Bank Transfer (ACH)", sub: `Direct deposit to ${BIZ.name}` }];
 
-  const canNext = [region && service, format, booked, name.trim() && email.trim(), payOk][step];
+  const canNext = [region && service, format, date && time, name.trim() && email.trim(), payOk][step];
 
-  const reset = () => {
-    setStep(0); setRegion(null); setService(null); setFormat(null);
-    setBooked(false); setName(""); setEmail(""); setPhone(""); setNotes("");
-    setPay(null); setPayOk(false); setDone(false); setAiNote("");
-  };
+  const reset = () => { setStep(0); setRegion(null); setService(null); setFormat(null); setDate(null); setTime(null); setName(""); setEmail(""); setPhone(""); setNotes(""); setPay(null); setPayOk(false); setDone(false); setAiNote(""); };
 
+  // ── THE FIX: submit now calls /api/book ──────────────────────────────────
   const submit = async () => {
     setBusy(true);
-    const fallback = `Thanks, ${name.split(" ")[0]}! Your ${fmt?.label.toLowerCase()} for ${svc?.title} is confirmed. Check your email for the calendar invite. We're looking forward to it!`;
+    const fallback = `Thanks, ${name.split(" ")[0]}! Your ${fmt?.label.toLowerCase()} for ${svc?.title} is locked in for ${fmtDateShort(date)} at ${time}. We're looking forward to it. Talk soon!`;
     try {
       await fetch("/api/book", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, phone, service: svc?.title, message: notes }),
+        body: JSON.stringify({
+          name,
+          email,
+          phone,
+          service: svc?.title,
+          date: date ? date.toISOString().split("T")[0] : "",
+          time,
+          message: notes,
+        }),
       });
     } catch (err) {
       console.error("Booking API error:", err);
@@ -524,7 +505,8 @@ export default function RVPBooking() {
         <div style={{ background: T.BG, border: `1px solid ${T.BORD}`, borderRadius: 14, padding: 18, textAlign: "left", marginBottom: 20 }}>
           <SummaryRow label="Service" value={svc?.title} />
           <SummaryRow label="Format" value={fmt?.label} />
-          <SummaryRow label="Scheduled via" value="Google Calendar" />
+          <SummaryRow label="Date" value={fmtDate(date)} />
+          <SummaryRow label="Time" value={time} />
           <div style={{ borderTop: `1px solid ${T.BORD}`, margin: "9px 0", paddingTop: 9 }}>
             <SummaryRow label="Amount" value={amount} accent />
             <SummaryRow label="Paid via" value={pay === "gcash" ? "GCash" : pay === "ach" ? "ACH Bank Transfer" : "BlueVine Online"} />
@@ -539,13 +521,13 @@ export default function RVPBooking() {
   const heads = [
     ["Let's get started", "First, where are you based and what do you need?"],
     ["How should we meet?", "Pick whichever's easiest for you."],
-    ["Pick a time", "Select an available slot directly from the live calendar."],
+    ["Find a time that works", "All times shown in your local timezone."],
     ["Tell us about you", "So we can confirm and prepare for your session."],
     ["Last step: confirm & pay", "Complete payment to lock in your booking."],
   ][step];
 
   return (
-    <Shell step={step} summary={step > 0 ? { region, rd, svc, fmt, amount, booked } : null}>
+    <Shell step={step} summary={step > 0 ? { region, rd, svc, fmt, amount, date, time } : null}>
       <div style={{ marginBottom: 20 }}>
         <h2 style={{ fontFamily: SERIF, fontSize: 25, fontWeight: 400, color: T.TEXT, margin: "0 0 5px" }}>{heads[0]}</h2>
         <p style={{ fontSize: 13.5, color: T.MUTED, margin: 0 }}>{heads[1]}</p>
@@ -608,9 +590,21 @@ export default function RVPBooking() {
         </div>
       )}
 
-      {/* ── STEP 2: Google Calendar Embed ── */}
       {step === 2 && (
-        <GoogleCalendarStep onBooked={setBooked} booked={booked} />
+        <>
+          <Calendar value={date} onChange={setDate} />
+          {date && (
+            <div style={{ marginTop: 18 }}>
+              <p style={LBL}>Available times · {fmtDateShort(date)}</p>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(88px,1fr))", gap: 8 }}>
+                {TIMES.map(t => (
+                  <div key={t} onClick={() => setTime(t)} style={{ padding: "10px 0", textAlign: "center", borderRadius: 9, fontFamily: SANS, fontSize: 13, fontWeight: 600, cursor: "pointer", background: time === t ? T.GOLD : T.CARD2, color: time === t ? T.BG : T.TEXT, border: `1.5px solid ${time === t ? T.GOLD : T.BORD}`, transition: "all .15s" }}>{t}</div>
+                ))}
+              </div>
+            </div>
+          )}
+          {!date && <p style={{ fontSize: 12.5, color: T.FAINT, margin: "14px 2px 0", display: "flex", alignItems: "center", gap: 7 }}><Icon name="cal" size={15} color={T.FAINT} /> Pick a day to see open times.</p>}
+        </>
       )}
 
       {step === 3 && (
@@ -631,7 +625,8 @@ export default function RVPBooking() {
           <div style={{ background: T.BG, borderRadius: 14, border: `1px solid ${T.BORD}`, padding: 16, marginBottom: 20 }}>
             <SummaryRow label="Service" value={svc?.title} />
             <SummaryRow label="Format" value={fmt?.label} />
-            <SummaryRow label="Scheduled via" value="Google Calendar" />
+            <SummaryRow label="Date" value={fmtDate(date)} />
+            <SummaryRow label="Time" value={time} />
             <div style={{ borderTop: `1px solid ${T.BORD}`, marginTop: 9, paddingTop: 9 }}>
               <SummaryRow label="Total due" value={amount} accent />
             </div>
