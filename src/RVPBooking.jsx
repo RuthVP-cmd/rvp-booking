@@ -22,7 +22,7 @@ const BIZ = {
   email: "info@rvpengineering.us",
   owner: "Ruth Van Patten",
 };
-const FEE_US = 50;
+const FEE_US = 49.99;
 const FEE_PH = 2500;
 
 const REGIONS = {
