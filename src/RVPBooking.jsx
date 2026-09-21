@@ -22,16 +22,17 @@ const BIZ = {
   email: "info@rvpengineering.us",
   owner: "Ruth Van Patten",
 };
-const FEE_US = 49.99;
+const FEE_US = 19.99;
 const FEE_PH = 2500;
 
 const REGIONS = {
   us: {
     label: "United States", currency: "USD", fee: FEE_US,
-    blurb: "Preconstruction & project engineering for commercial and public works.",
+    blurb: "Preconstruction, project engineering, and permit support for commercial, residential, and public works.",
     services: [
       { id: "pre", icon: "ruler", title: "Preconstruction & Estimating", desc: "Conceptual budgeting, bid strategy, scope review, quantity takeoff, and value engineering.", tag: "Most booked" },
       { id: "eng", icon: "crane", title: "Project Engineering", desc: "RFI/submittal management, schedule coordination, subcontractor oversight, and field problem-solving." },
+      { id: "permit", icon: "doc", title: "Permit & Certificate Application", desc: "Permit processing and certification application support for residents and businesses. Building permits, business licenses, SB/DVBE/DBE/WOSB certifications, and agency vendor registration, with follow-up until a decision is issued.", tag: "New" },
     ],
   },
   ph: {
