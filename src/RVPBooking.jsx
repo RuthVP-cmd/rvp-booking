@@ -14,7 +14,7 @@ const T = {
 };
 
 const BIZ = {
-  bluevineLink: "https://pay.bluevine.com/p/c2238b2b9b234bd7957949790cc232c5",
+  bluevineLink: "https://pay.bluevine.com/p/55b98a7c6c984e8099031910f8df562b",
   routing: "125109019",
   account: "875112062463",
   name: "RVP Engineering Services",
