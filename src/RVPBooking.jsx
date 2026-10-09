@@ -14,20 +14,15 @@ const T = {
 };
 
 const BIZ = {
-  bluevineLink: "https://pay.bluevine.com/p/55b98a7c6c984e8099031910f8df562b",
-  routing: "125109019",
-  account: "875112062463",
   name: "RVP Engineering Services",
-  gcash: "0945-130-3714",
   email: "info@rvpengineering.us",
   owner: "Ruth Van Patten",
 };
-const FEE_US = 19.99;
-const FEE_PH = 2500;
+const PRICE_LABEL = "Free";
 
 const REGIONS = {
   us: {
-    label: "United States", currency: "USD", fee: FEE_US,
+    label: "United States", currency: "USD",
     blurb: "Preconstruction, project engineering, and permit support for commercial, residential, and public works.",
     services: [
       { id: "pre", icon: "ruler", title: "Preconstruction & Estimating", desc: "Conceptual budgeting, bid strategy, scope review, quantity takeoff, and value engineering.", tag: "Most booked" },
@@ -36,7 +31,7 @@ const REGIONS = {
     ],
   },
   ph: {
-    label: "Philippines", currency: "PHP", fee: FEE_PH,
+    label: "Philippines", currency: "PHP",
     blurb: "Permits, plans, estimates and structural work for homes and light commercial.",
     services: [
       { id: "bpa", icon: "doc", title: "Building Permit Application", desc: "End-to-end preparation and filing of permit documents with your local government unit.", tag: "Popular" },
@@ -58,7 +53,6 @@ const FORMATS = [
 const TIMES = ["8:00 AM", "9:00 AM", "10:00 AM", "11:00 AM", "12:00 PM", "1:00 PM", "2:00 PM", "3:00 PM", "4:00 PM", "5:00 PM"];
 const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
-const money = (region, fee) => region === "ph" ? `₱${fee.toLocaleString()}` : `$${fee}`;
 const fmtDate = (d) => d ? d.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" }) : "";
 const fmtDateShort = (d) => d ? d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" }) : "";
 const SANS = "'Hanken Grotesk', sans-serif";
@@ -273,7 +267,7 @@ function Chip({ children, color }) {
 }
 
 function Stepper({ step }) {
-  const steps = ["Service", "Format", "Time", "Details", "Pay"];
+  const steps = ["Service", "Format", "Time", "Details", "Confirm"];
   return (
     <div style={{ display: "flex", alignItems: "flex-start", marginBottom: 26 }}>
       {steps.map((s, i) => {
@@ -369,29 +363,20 @@ function Calendar({ value, onChange }) {
   );
 }
 
-function PayPanel({ tone, children }) {
-  const map = { green: { bg: T.GREEN_BG, bd: T.GREEN_BD }, blue: { bg: T.BLUE_BG, bd: T.BLUE_BD } }[tone];
-  return <div style={{ background: map.bg, border: `1px solid ${map.bd}`, borderRadius: 12, padding: 16, marginTop: 12 }}>{children}</div>;
-}
-
-function Confirm({ checked, onChange, tone, label }) {
-  const tx = tone === "blue" ? T.BLUE_TX : T.GREEN;
+function FreeNote() {
   return (
-    <label style={{ display: "flex", alignItems: "center", gap: 11, marginTop: 14, cursor: "pointer" }}>
-      <span style={{ width: 20, height: 20, borderRadius: 6, border: `1.5px solid ${checked ? tx : tx + "88"}`, background: checked ? tx : "transparent", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, transition: "all .15s" }}>
-        {checked && <Icon name="check" size={12} stroke={2.6} color={T.BG} />}
-      </span>
-      <input type="checkbox" checked={checked} onChange={e => onChange(e.target.checked)} style={{ display: "none" }} />
-      <span style={{ fontSize: 13, color: tx, fontWeight: 600 }}>{label}</span>
-    </label>
+    <div style={{ background: T.GREEN_BG, border: `1px solid ${T.GREEN_BD}`, borderRadius: 12, padding: 16 }}>
+      <p style={{ fontSize: 13.5, color: T.GREEN, fontWeight: 700, margin: "0 0 4px" }}>This consultation is free</p>
+      <p style={{ fontSize: 12.5, color: "#4FB587", margin: 0 }}>No payment is needed to book. Confirm below and we will send your details by email.</p>
+    </div>
   );
 }
 
-function BookingStrip({ rd, svc, fmt, amount, date, time }) {
+function BookingStrip({ rd, svc, fmt, date, time }) {
   const items = [];
   if (rd) items.push(rd.label);
   if (svc) items.push(svc.title);
-  if (fmt) items.push(`${fmt.label} · ${amount}`);
+  if (fmt) items.push(`${fmt.label} · ${PRICE_LABEL}`);
   if (date) items.push(fmtDateShort(date));
   if (time) items.push(time);
   if (!items.length) return null;
@@ -442,8 +427,6 @@ export default function RVPBooking() {
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [notes, setNotes] = useState("");
-  const [pay, setPay] = useState(null);
-  const [payOk, setPayOk] = useState(false);
   const [busy, setBusy] = useState(false);
   const [aiNote, setAiNote] = useState("");
   const [done, setDone] = useState(false);
@@ -451,20 +434,11 @@ export default function RVPBooking() {
   const rd = region ? REGIONS[region] : null;
   const svc = rd?.services.find(s => s.id === service);
   const fmt = FORMATS.find(f => f.id === format);
-  const amount = rd ? money(region, rd.fee) : "";
 
-  const payOptions = region === "ph"
-    ? [{ id: "gcash", icon: "phone", label: "GCash", sub: `Send to ${BIZ.gcash}` },
-       { id: "bluevine", icon: "card", label: "Pay Online", sub: "Credit / debit card via BlueVine" },
-       { id: "ach", icon: "bank", label: "Bank Transfer (ACH)", sub: `Direct deposit to ${BIZ.name}` }]
-    : [{ id: "bluevine", icon: "card", label: "Pay Online", sub: "Credit / debit card via BlueVine" },
-       { id: "ach", icon: "bank", label: "Bank Transfer (ACH)", sub: `Direct deposit to ${BIZ.name}` }];
+  const canNext = [region && service, format, date && time, name.trim() && email.trim(), true][step];
 
-  const canNext = [region && service, format, date && time, name.trim() && email.trim(), payOk][step];
+  const reset = () => { setStep(0); setRegion(null); setService(null); setFormat(null); setDate(null); setTime(null); setName(""); setEmail(""); setPhone(""); setNotes(""); setDone(false); setAiNote(""); };
 
-  const reset = () => { setStep(0); setRegion(null); setService(null); setFormat(null); setDate(null); setTime(null); setName(""); setEmail(""); setPhone(""); setNotes(""); setPay(null); setPayOk(false); setDone(false); setAiNote(""); };
-
-  // ── THE FIX: submit now calls /api/book ──────────────────────────────────
   const submit = async () => {
     setBusy(true);
     const fallback = `Thanks, ${name.split(" ")[0]}! Your ${fmt?.label.toLowerCase()} for ${svc?.title} is locked in for ${fmtDateShort(date)} at ${time}. We're looking forward to it. Talk soon!`;
@@ -509,8 +483,7 @@ export default function RVPBooking() {
           <SummaryRow label="Date" value={fmtDate(date)} />
           <SummaryRow label="Time" value={time} />
           <div style={{ borderTop: `1px solid ${T.BORD}`, margin: "9px 0", paddingTop: 9 }}>
-            <SummaryRow label="Amount" value={amount} accent />
-            <SummaryRow label="Paid via" value={pay === "gcash" ? "GCash" : pay === "ach" ? "ACH Bank Transfer" : "BlueVine Online"} />
+            <SummaryRow label="Cost" value={PRICE_LABEL} accent />
           </div>
         </div>
         <p style={{ fontSize: 12.5, color: T.MUTED, textAlign: "center" }}>A confirmation is on its way to <strong style={{ color: T.TEXT }}>{email}</strong>.</p>
@@ -524,11 +497,11 @@ export default function RVPBooking() {
     ["How should we meet?", "Pick whichever's easiest for you."],
     ["Find a time that works", "All times shown in your local timezone."],
     ["Tell us about you", "So we can confirm and prepare for your session."],
-    ["Last step: confirm & pay", "Complete payment to lock in your booking."],
+    ["Last step: review & confirm", "Check the details below and lock in your free consultation."],
   ][step];
 
   return (
-    <Shell step={step} summary={step > 0 ? { region, rd, svc, fmt, amount, date, time } : null}>
+    <Shell step={step} summary={step > 0 ? { region, rd, svc, fmt, date, time } : null}>
       <div style={{ marginBottom: 20 }}>
         <h2 style={{ fontFamily: SERIF, fontSize: 25, fontWeight: 400, color: T.TEXT, margin: "0 0 5px" }}>{heads[0]}</h2>
         <p style={{ fontSize: 13.5, color: T.MUTED, margin: 0 }}>{heads[1]}</p>
@@ -581,7 +554,7 @@ export default function RVPBooking() {
                   <div style={{ fontFamily: SANS, fontSize: 15, fontWeight: 700, color: T.TEXT }}>{f.label}</div>
                   <div style={{ fontSize: 12.5, color: T.MUTED, marginTop: 2 }}>{f.sub}</div>
                 </div>
-                <div style={{ fontSize: 16, fontWeight: 700, color: T.GOLD }}>{amount}</div>
+                <div style={{ fontSize: 16, fontWeight: 700, color: T.GOLD }}>{PRICE_LABEL}</div>
               </div>
             </SelCard>
           ))}
@@ -628,51 +601,14 @@ export default function RVPBooking() {
             <SummaryRow label="Format" value={fmt?.label} />
             <SummaryRow label="Date" value={fmtDate(date)} />
             <SummaryRow label="Time" value={time} />
+            <SummaryRow label="Name" value={name} />
+            <SummaryRow label="Email" value={email} />
+            {phone.trim() && <SummaryRow label="Phone" value={phone} />}
             <div style={{ borderTop: `1px solid ${T.BORD}`, marginTop: 9, paddingTop: 9 }}>
-              <SummaryRow label="Total due" value={amount} accent />
+              <SummaryRow label="Cost" value={PRICE_LABEL} accent />
             </div>
           </div>
-          <p style={LBL}>Choose how to pay</p>
-          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            {payOptions.map(pm => (
-              <SelCard key={pm.id} selected={pay === pm.id} onClick={() => { setPay(pm.id); setPayOk(false); }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-                  <IconBadge name={pm.icon} active={pay === pm.id} />
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontFamily: SANS, fontSize: 14.5, fontWeight: 700, color: T.TEXT }}>{pm.label}</div>
-                    <div style={{ fontSize: 12.5, color: T.MUTED, marginTop: 2 }}>{pm.sub}</div>
-                  </div>
-                  <div><RadioDot on={pay === pm.id} /></div>
-                </div>
-              </SelCard>
-            ))}
-          </div>
-
-          {pay === "bluevine" && (
-            <PayPanel tone="green">
-              <p style={{ fontSize: 13.5, color: T.GREEN, fontWeight: 700, margin: "0 0 4px" }}>Pay {amount} securely online</p>
-              <p style={{ fontSize: 12.5, color: "#4FB587", margin: "0 0 12px" }}>BlueVine's secure checkout opens in a new tab.</p>
-              <a href={BIZ.bluevineLink} target="_blank" rel="noopener noreferrer" style={{ display: "inline-block", background: T.GOLD, color: T.BG, fontFamily: SANS, fontWeight: 700, fontSize: 13.5, padding: "11px 22px", borderRadius: 9, textDecoration: "none" }}>Pay {amount} now →</a>
-              <Confirm tone="green" checked={payOk} onChange={setPayOk} label={`I've completed the payment of ${amount}`} />
-            </PayPanel>
-          )}
-          {pay === "ach" && (
-            <PayPanel tone="blue">
-              <p style={{ fontSize: 13.5, color: T.BLUE_TX, fontWeight: 700, margin: "0 0 10px" }}>Send {amount} via ACH to:</p>
-              <SummaryRow label="Account name" value={BIZ.name} />
-              <SummaryRow label="Routing number" value={BIZ.routing} />
-              <SummaryRow label="Account number" value={BIZ.account} />
-              <SummaryRow label="Account type" value="Checking" />
-              <Confirm tone="blue" checked={payOk} onChange={setPayOk} label={`I've initiated the ACH transfer of ${amount}`} />
-            </PayPanel>
-          )}
-          {pay === "gcash" && (
-            <PayPanel tone="green">
-              <p style={{ fontSize: 13.5, color: T.GREEN, fontWeight: 700, margin: "0 0 4px" }}>Send {amount} to {BIZ.gcash} via GCash</p>
-              <p style={{ fontSize: 12.5, color: "#4FB587", margin: 0 }}>After sending, tick the box below to confirm.</p>
-              <Confirm tone="green" checked={payOk} onChange={setPayOk} label={`I've sent the payment of ${amount}`} />
-            </PayPanel>
-          )}
+          <FreeNote />
         </>
       )}
 
